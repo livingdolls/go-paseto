@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"gopaseto/internal/core/dto"
-	"gopaseto/internal/core/entity"
-	"gopaseto/internal/core/port/repository"
+	"github.com/livingdolls/go-paseto/internal/core/dto"
+	"github.com/livingdolls/go-paseto/internal/core/entity"
+	"github.com/livingdolls/go-paseto/internal/core/port/repository"
 )
 
 type userRepository struct {

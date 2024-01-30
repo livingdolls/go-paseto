@@ -1,8 +1,8 @@
 package service
 
 import (
-	"gopaseto/internal/core/model/request"
-	"gopaseto/internal/core/model/response"
+	"github.com/livingdolls/go-paseto/internal/core/model/request"
+	"github.com/livingdolls/go-paseto/internal/core/model/response"
 )
 
 type UserPortService interface {

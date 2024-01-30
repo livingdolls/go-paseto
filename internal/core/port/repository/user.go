@@ -2,7 +2,10 @@ package repository
 
 import (
 	"errors"
-	"gopaseto/internal/core/dto"
+
+	"github.com/livingdolls/go-paseto/internal/core/dto"
+
+	_ "github.com/golang/mock/mockgen/model"
 )
 
 var DuplicateUser = errors.New("Duplicate Users")

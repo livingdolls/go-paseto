@@ -2,8 +2,9 @@ package response
 
 import (
 	"errors"
-	"gopaseto/internal/core/entity"
 	"net/http"
+
+	"github.com/livingdolls/go-paseto/internal/core/entity"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

@@ -1,12 +1,13 @@
 package service
 
 import (
-	"gopaseto/internal/core/dto"
-	"gopaseto/internal/core/model/request"
-	"gopaseto/internal/core/model/response"
-	"gopaseto/internal/core/port/repository"
-	"gopaseto/internal/core/port/service"
 	"time"
+
+	"github.com/livingdolls/go-paseto/internal/core/dto"
+	"github.com/livingdolls/go-paseto/internal/core/model/request"
+	"github.com/livingdolls/go-paseto/internal/core/model/response"
+	"github.com/livingdolls/go-paseto/internal/core/port/repository"
+	"github.com/livingdolls/go-paseto/internal/core/port/service"
 
 	"github.com/google/uuid"
 )

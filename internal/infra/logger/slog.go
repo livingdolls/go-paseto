@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"gopaseto/internal/core/config"
+	"github.com/livingdolls/go-paseto/internal/core/config"
 
 	slogmulti "github.com/samber/slog-multi"
 	"gopkg.in/natefinch/lumberjack.v2"
