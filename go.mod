@@ -1,4 +1,4 @@
-module gopaseto
+module github.com/livingdolls/go-paseto
 
 go 1.21.4
 
@@ -6,15 +6,19 @@ require (
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
 	github.com/samber/slog-gin v1.10.1
 	github.com/samber/slog-multi v1.0.2
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/samber/lo v1.38.1 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect

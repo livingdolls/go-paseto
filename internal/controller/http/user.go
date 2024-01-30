@@ -1,10 +1,10 @@
 package http2
 
 import (
-	"gopaseto/internal/core/common/router"
-	"gopaseto/internal/core/model/request"
-	"gopaseto/internal/core/model/response"
-	"gopaseto/internal/core/port/service"
+	"github.com/livingdolls/go-paseto/internal/core/common/router"
+	"github.com/livingdolls/go-paseto/internal/core/model/request"
+	"github.com/livingdolls/go-paseto/internal/core/model/response"
+	"github.com/livingdolls/go-paseto/internal/core/port/service"
 
 	"github.com/gin-gonic/gin"
 )

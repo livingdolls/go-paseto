@@ -1,19 +1,20 @@
 package main
 
 import (
-	http2 "gopaseto/internal/controller/http"
-	"gopaseto/internal/core/config"
-	"gopaseto/internal/core/server/http"
-	"gopaseto/internal/core/service"
-	"gopaseto/internal/infra/logger"
-	"gopaseto/internal/infra/storages"
-	"gopaseto/internal/infra/storages/repository"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	http2 "github.com/livingdolls/go-paseto/internal/controller/http"
+	"github.com/livingdolls/go-paseto/internal/core/config"
+	"github.com/livingdolls/go-paseto/internal/core/server/http"
+	"github.com/livingdolls/go-paseto/internal/core/service"
+	"github.com/livingdolls/go-paseto/internal/infra/logger"
+	"github.com/livingdolls/go-paseto/internal/infra/storages"
+	"github.com/livingdolls/go-paseto/internal/infra/storages/repository"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

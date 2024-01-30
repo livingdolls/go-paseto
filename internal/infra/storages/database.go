@@ -1,10 +1,11 @@
 package storages
 
 import (
-	"gopaseto/internal/core/config"
-	"gopaseto/internal/core/port/repository"
 	"strconv"
 	"time"
+
+	"github.com/livingdolls/go-paseto/internal/core/config"
+	"github.com/livingdolls/go-paseto/internal/core/port/repository"
 
 	"github.com/jmoiron/sqlx"
 

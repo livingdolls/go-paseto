@@ -3,12 +3,13 @@ package http
 import (
 	"context"
 	"fmt"
-	"gopaseto/internal/core/config"
 	"io"
 	"log"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/livingdolls/go-paseto/internal/core/config"
 
 	"github.com/gin-gonic/gin"
 )
