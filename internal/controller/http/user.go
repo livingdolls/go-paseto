@@ -25,6 +25,8 @@ func (u UserController) InitRouter() {
 	api := u.gin.Group("api/v1")
 
 	router.Post(api, "/register", u.register)
+	router.Get(api, "/users", u.getUsers)
+	api.GET("/user/:id", u.getUserById)
 }
 
 func (u UserController) register(c *gin.Context) {
@@ -43,4 +45,33 @@ func (u UserController) register(c *gin.Context) {
 	}
 
 	response.HandleSuccessResponseCreated(c, resp)
+}
+
+func (u UserController) getUsers(c *gin.Context) {
+	res, err := u.userService.ListUsers()
+
+	if err != nil {
+		response.HandleErrorResponse(c, err)
+		return
+	}
+
+	response.HandleSuccessResponse(c, res)
+}
+
+func (u UserController) getUserById(c *gin.Context) {
+	var getId request.GetUserByIdRequest
+
+	if err := c.ShouldBindUri(&getId); err != nil {
+		response.RequestValidationError(c, err)
+		return
+	}
+
+	res, err := u.userService.GetUser(&getId)
+
+	if err != nil {
+		response.HandleErrorResponse(c, err)
+		return
+	}
+
+	response.HandleSuccessResponse(c, res)
 }
