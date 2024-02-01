@@ -25,6 +25,7 @@ var errorStatusMap = map[error]int{
 	entity.ErrNoUpdatedData:              http.StatusBadRequest,
 	entity.ErrInsufficientStock:          http.StatusBadRequest,
 	entity.ErrInsufficientPayment:        http.StatusBadRequest,
+	entity.ErrNoMatchPassword:            http.StatusUnauthorized,
 }
 
 func HandleErrorResponse(c *gin.Context, err error) {

@@ -79,3 +79,18 @@ func (mr *MockUserPortRepositoryMockRecorder) GetUserById(arg0 interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockUserPortRepository)(nil).GetUserById), arg0)
 }
+
+// Login mocks base method
+func (m *MockUserPortRepository) Login(arg0 *request.LoginUserRequest) (*response.LoginUserResponseWithPassword, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", arg0)
+	ret0, _ := ret[0].(*response.LoginUserResponseWithPassword)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Login indicates an expected call of Login
+func (mr *MockUserPortRepositoryMockRecorder) Login(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUserPortRepository)(nil).Login), arg0)
+}

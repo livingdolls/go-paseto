@@ -27,6 +27,7 @@ func (u UserController) InitRouter() {
 	router.Post(api, "/register", u.register)
 	router.Get(api, "/users", u.getUsers)
 	api.GET("/user/:id", u.getUserById)
+	router.Get(api, "/login", u.login)
 }
 
 func (u UserController) register(c *gin.Context) {
@@ -67,6 +68,24 @@ func (u UserController) getUserById(c *gin.Context) {
 	}
 
 	res, err := u.userService.GetUser(&getId)
+
+	if err != nil {
+		response.HandleErrorResponse(c, err)
+		return
+	}
+
+	response.HandleSuccessResponse(c, res)
+}
+
+func (u UserController) login(c *gin.Context) {
+	var user request.LoginUserRequest
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		response.RequestValidationError(c, err)
+		return
+	}
+
+	res, err := u.userService.Login(&user)
 
 	if err != nil {
 		response.HandleErrorResponse(c, err)

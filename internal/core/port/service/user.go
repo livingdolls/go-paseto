@@ -10,4 +10,5 @@ type UserPortService interface {
 	Register(user *request.RegisterUserRequest) (*response.RegisterUserResponse, error)
 	ListUsers() (*[]response.RegisterUserResponse, error)
 	GetUser(id *request.GetUserByIdRequest) (*response.GetUserByIdResponse, error)
+	Login(user *request.LoginUserRequest) (*response.LoginUserResponse, error)
 }

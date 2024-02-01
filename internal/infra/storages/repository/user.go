@@ -35,6 +35,7 @@ const (
 
 	getUser     = "SELECT fullname,username,email,createdat FROM Users"
 	getUserById = "SELECT id, username, fullname, email, isemailverified, role, passwordchangedat, createdat FROM Users WHERE id = ?"
+	loginUser   = "SELECT id, username, fullname, email, hashedpassword, isemailverified, role, passwordchangedat, createdat FROM Users WHERE username = ?"
 )
 
 // GetListUser implements repository.UserPortRepository.
@@ -134,4 +135,37 @@ func (u *userRepository) GetUserById(id *request.GetUserByIdRequest) (response.G
 	}
 
 	return user, err
+}
+
+// Login implements repository.UserPortRepository.
+func (u *userRepository) Login(user *request.LoginUserRequest) (*response.LoginUserResponseWithPassword, error) {
+	var userRes response.LoginUserResponseWithPassword
+
+	row := u.db.GetDB().QueryRow(loginUser, user.Username)
+
+	err := row.Scan(
+		&userRes.ID,
+		&userRes.Username,
+		&userRes.FullName,
+		&userRes.Email,
+		&userRes.HashedPassword,
+		&userRes.IsEmailVerified,
+		&userRes.Role,
+		&userRes.PasswordChangedAt,
+		&userRes.CreatedAt,
+	)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, entity.ErrDataNotFound
+		}
+
+		return nil, err
+	}
+
+	if user.Password != userRes.HashedPassword {
+		return nil, entity.ErrNoMatchPassword
+	}
+
+	return &userRes, nil
 }

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -119,6 +118,26 @@ func TestCreateUser(t *testing.T) {
 			expected: outputService{
 				user: nil,
 				err:  entity.ErrInternal,
+			},
+		},
+		{
+			desc: "FAIL_DUPLICATED",
+			mocks: func(userRepo *mockdb.MockUserPortRepository) {
+				userRepo.EXPECT().
+					CreateUser(gomock.Any()).
+					Times(1).
+					Return(nil, entity.ErrConflictingData)
+			},
+			input: createUserInput{
+				user: repoInput,
+			},
+			output: createUserOutput{
+				user: nil,
+				err:  entity.ErrConflictingData,
+			},
+			expected: outputService{
+				user: nil,
+				err:  entity.ErrConflictingData,
 			},
 		},
 	}
@@ -331,10 +350,149 @@ func TestGetUserById(t *testing.T) {
 
 			userService := NewUserService(userRepo)
 			result, err := userService.GetUser(&tc.input)
-			fmt.Println("Result >>")
-			fmt.Println(result)
 			assert.Equal(t, tc.expected.err, err, "Error mismatch")
 			assert.Equal(t, tc.expected.user, result)
+		})
+	}
+}
+
+type loginInput struct {
+	user *request.LoginUserRequest
+}
+
+type loginService struct {
+	user *response.LoginUserResponseWithPassword
+	err  error
+}
+type loginRepo struct {
+	user *response.LoginUserResponse
+	err  error
+}
+
+func TestLogin(t *testing.T) {
+	userInput := &request.LoginUserRequest{
+		Username: gofakeit.Username(),
+		Password: gofakeit.Password(true, true, true, false, false, 8),
+	}
+
+	serviceRespon := &response.LoginUserResponseWithPassword{
+		ID:                gofakeit.UUID(),
+		Username:          userInput.Username,
+		FullName:          gofakeit.Name(),
+		Email:             gofakeit.Email(),
+		HashedPassword:    userInput.Password,
+		PasswordChangedAt: time.Time{},
+		Role:              dto.Admin,
+		IsEmailVerified:   false,
+		CreatedAt:         time.Now(),
+	}
+
+	repoRespon := &response.LoginUserResponse{
+		ID:                serviceRespon.ID,
+		Username:          userInput.Username,
+		FullName:          serviceRespon.FullName,
+		Email:             serviceRespon.Email,
+		PasswordChangedAt: serviceRespon.PasswordChangedAt,
+		Role:              serviceRespon.Role,
+		IsEmailVerified:   serviceRespon.IsEmailVerified,
+		CreatedAt:         serviceRespon.CreatedAt,
+	}
+
+	testCases := []struct {
+		desc string
+		mock func(
+			userRepo *mockdb.MockUserPortRepository,
+		)
+		input   loginInput
+		service loginService
+		repo    loginRepo
+	}{
+		{
+			desc: "LOGIN SUCCESSFULL",
+			mock: func(userRepo *mockdb.MockUserPortRepository) {
+				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(serviceRespon, nil)
+			},
+			input: loginInput{
+				user: userInput,
+			},
+			service: loginService{
+				user: serviceRespon,
+				err:  nil,
+			},
+			repo: loginRepo{
+				user: repoRespon,
+				err:  nil,
+			},
+		},
+		{
+			desc: "LOGIN ERROR INTERNAL",
+			mock: func(userRepo *mockdb.MockUserPortRepository) {
+				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrInternal)
+			},
+			input: loginInput{
+				user: userInput,
+			},
+			service: loginService{
+				user: nil,
+				err:  entity.ErrInternal,
+			},
+			repo: loginRepo{
+				user: nil,
+				err:  entity.ErrInternal,
+			},
+		},
+		{
+			desc: "LOGIN ERROR USERNAME NOT FOUND",
+			mock: func(userRepo *mockdb.MockUserPortRepository) {
+				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrDataNotFound)
+			},
+			input: loginInput{
+				user: userInput,
+			},
+			service: loginService{
+				user: nil,
+				err:  entity.ErrDataNotFound,
+			},
+			repo: loginRepo{
+				user: nil,
+				err:  entity.ErrDataNotFound,
+			},
+		},
+		{
+			desc: "LOGIN PASSWORD NOT MATCH",
+			mock: func(userRepo *mockdb.MockUserPortRepository) {
+				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrNoMatchPassword)
+			},
+			input: loginInput{
+				user: userInput,
+			},
+			service: loginService{
+				user: nil,
+				err:  entity.ErrNoMatchPassword,
+			},
+			repo: loginRepo{
+				user: nil,
+				err:  entity.ErrNoMatchPassword,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			userRepo := mockdb.NewMockUserPortRepository(ctrl)
+
+			tc.mock(userRepo)
+
+			userService := NewUserService(userRepo)
+			result, err := userService.Login(tc.input.user)
+			assert.Equal(t, tc.repo.err, err, "Error mismatch")
+			assert.Equal(t, tc.repo.user, result)
 		})
 	}
 }
