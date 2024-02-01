@@ -6,3 +6,7 @@ type RegisterUserRequest struct {
 	FullName string `json:"full_name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 }
+
+type GetUserByIdRequest struct {
+	ID string `uri:"id" binding:"required,min=1"`
+}

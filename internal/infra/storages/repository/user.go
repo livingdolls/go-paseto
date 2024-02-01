@@ -1,8 +1,12 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/livingdolls/go-paseto/internal/core/dto"
 	"github.com/livingdolls/go-paseto/internal/core/entity"
+	"github.com/livingdolls/go-paseto/internal/core/model/request"
+	"github.com/livingdolls/go-paseto/internal/core/model/response"
 	"github.com/livingdolls/go-paseto/internal/core/port/repository"
 )
 
@@ -28,7 +32,48 @@ const (
 		"`passwordchangedat`," +
 		"`createdat`" +
 		") VALUES (?,?,?,?,?,?,?,?,?)"
+
+	getUser     = "SELECT fullname,username,email,createdat FROM Users"
+	getUserById = "SELECT id, username, fullname, email, isemailverified, role, passwordchangedat, createdat FROM Users WHERE id = ?"
 )
+
+// GetListUser implements repository.UserPortRepository.
+func (u *userRepository) GetListUser() (*[]response.RegisterUserResponse, error) {
+	res, err := u.db.GetDB().QueryContext(context.Background(), getUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Close()
+
+	users := []response.RegisterUserResponse{}
+
+	for res.Next() {
+		var i response.RegisterUserResponse
+
+		if err := res.Scan(
+			&i.FullName,
+			&i.Username,
+			&i.Email,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, i)
+	}
+
+	if err := res.Close(); err != nil {
+		return nil, err
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
+
+	return &users, nil
+}
 
 // CreateUser implements repository.UserPortRepository.
 func (u *userRepository) CreateUser(user *dto.UserDTO) (*dto.UserDTO, error) {
@@ -64,4 +109,29 @@ func (u *userRepository) CreateUser(user *dto.UserDTO) (*dto.UserDTO, error) {
 	}
 
 	return user, nil
+}
+
+// GetUserById implements repository.UserPortRepository.
+func (u *userRepository) GetUserById(id *request.GetUserByIdRequest) (response.GetUserByIdResponse, error) {
+	var user response.GetUserByIdResponse
+	row := u.db.GetDB().QueryRow(getUserById, id.ID)
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.FullName,
+		&user.Email,
+		&user.IsEmailVerified,
+		&user.Role,
+		&user.PasswordChangedAt,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return user, entity.ErrDataNotFound
+		}
+		return user, err
+	}
+
+	return user, err
 }
