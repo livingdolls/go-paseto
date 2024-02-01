@@ -104,6 +104,8 @@ func (u *userService) Login(user *request.LoginUserRequest) (*response.LoginUser
 		return nil, entity.ErrInternal
 	}
 
+	// TODO :: Make Paseto Token
+
 	result = response.LoginUserResponse{
 		ID:                res.ID,
 		Username:          res.Username,
