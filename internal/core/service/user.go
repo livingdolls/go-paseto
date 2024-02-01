@@ -53,6 +53,9 @@ func (u *userService) Register(user *request.RegisterUserRequest) (*response.Reg
 	res, err := u.repo.CreateUser(userDTO)
 
 	if err != nil {
+		if err == entity.ErrConflictingData {
+			return nil, entity.ErrConflictingData
+		}
 		return nil, err
 	}
 
@@ -84,4 +87,34 @@ func (u *userService) GetUser(id *request.GetUserByIdRequest) (*response.GetUser
 	}
 
 	return &res, nil
+}
+
+// Login implements service.UserPortService.
+func (u *userService) Login(user *request.LoginUserRequest) (*response.LoginUserResponse, error) {
+	res, err := u.repo.Login(user)
+	var result response.LoginUserResponse
+
+	if err != nil {
+		if err == entity.ErrDataNotFound {
+			return nil, entity.ErrDataNotFound
+		} else if err == entity.ErrNoMatchPassword {
+			return nil, entity.ErrNoMatchPassword
+		}
+
+		return nil, entity.ErrInternal
+	}
+
+	result = response.LoginUserResponse{
+		ID:                res.ID,
+		Username:          res.Username,
+		FullName:          res.FullName,
+		Email:             res.Email,
+		IsEmailVerified:   res.IsEmailVerified,
+		Role:              res.Role,
+		PasswordChangedAt: result.PasswordChangedAt,
+		CreatedAt:         res.CreatedAt,
+	}
+
+	return &result, nil
+
 }

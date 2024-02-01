@@ -18,4 +18,5 @@ type UserPortRepository interface {
 	CreateUser(user *dto.UserDTO) (*dto.UserDTO, error)
 	GetListUser() (*[]response.RegisterUserResponse, error)
 	GetUserById(id *request.GetUserByIdRequest) (response.GetUserByIdResponse, error)
+	Login(user *request.LoginUserRequest) (*response.LoginUserResponseWithPassword, error)
 }

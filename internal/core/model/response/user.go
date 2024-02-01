@@ -23,3 +23,26 @@ type GetUserByIdResponse struct {
 	PasswordChangedAt time.Time
 	CreatedAt         time.Time
 }
+
+type LoginUserResponse struct {
+	ID                string
+	Username          string
+	FullName          string
+	Email             string
+	IsEmailVerified   bool
+	Role              dto.UserRole
+	PasswordChangedAt time.Time
+	CreatedAt         time.Time
+}
+
+type LoginUserResponseWithPassword struct {
+	ID                string
+	Username          string
+	FullName          string
+	Email             string
+	HashedPassword    string
+	IsEmailVerified   bool
+	Role              dto.UserRole
+	PasswordChangedAt time.Time
+	CreatedAt         time.Time
+}
