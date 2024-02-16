@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	http2 "github.com/livingdolls/go-paseto/internal/controller/http"
+	"github.com/livingdolls/go-paseto/internal/core/common/token"
 	"github.com/livingdolls/go-paseto/internal/core/config"
 	"github.com/livingdolls/go-paseto/internal/core/server/http"
 	"github.com/livingdolls/go-paseto/internal/core/service"
@@ -67,11 +68,20 @@ func main() {
 
 	// Dependensi Injection
 
+	token, err := token.NewPasetoMaker("asefabckgpsoterzlskdferpwcdwflre")
+
+	if err != nil {
+		slog.Error("Error initializing token service", "error", err)
+		os.Exit(1)
+	}
+
 	userRepo := repository.NewUsersRepository(db)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, token)
 	userController := http2.NewUserController(instance, userService)
 
-	userController.InitRouter()
+	version := "api/v1"
+
+	userController.InitRouter(version)
 
 	// Start Server
 	httpServer := http.NewHttpServer(

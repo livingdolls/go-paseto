@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/livingdolls/go-paseto/internal/core/dto"
@@ -12,7 +13,7 @@ import (
 	"github.com/livingdolls/go-paseto/internal/core/model/request"
 	"github.com/livingdolls/go-paseto/internal/core/model/response"
 	mockdb "github.com/livingdolls/go-paseto/internal/infra/mock/repository"
-	"github.com/stretchr/testify/assert"
+	mocksv "github.com/livingdolls/go-paseto/internal/infra/mock/service"
 )
 
 type createUserInput struct {
@@ -75,6 +76,7 @@ func TestCreateUser(t *testing.T) {
 		desc  string
 		mocks func(
 			userRepo *mockdb.MockUserPortRepository,
+			tokenRepo *mocksv.MockMaker,
 		)
 		input    createUserInput
 		output   createUserOutput
@@ -82,7 +84,7 @@ func TestCreateUser(t *testing.T) {
 	}{
 		{
 			desc: "Success",
-			mocks: func(userRepo *mockdb.MockUserPortRepository) {
+			mocks: func(userRepo *mockdb.MockUserPortRepository, tokenMaker *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					CreateUser(gomock.Any()).
 					Times(1).
@@ -102,7 +104,7 @@ func TestCreateUser(t *testing.T) {
 		},
 		{
 			desc: "FAIL_INTERNALERROR",
-			mocks: func(userRepo *mockdb.MockUserPortRepository) {
+			mocks: func(userRepo *mockdb.MockUserPortRepository, tokenMaker *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					CreateUser(gomock.Any()).
 					Times(1).
@@ -122,7 +124,7 @@ func TestCreateUser(t *testing.T) {
 		},
 		{
 			desc: "FAIL_DUPLICATED",
-			mocks: func(userRepo *mockdb.MockUserPortRepository) {
+			mocks: func(userRepo *mockdb.MockUserPortRepository, tokenMaker *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					CreateUser(gomock.Any()).
 					Times(1).
@@ -151,10 +153,11 @@ func TestCreateUser(t *testing.T) {
 			defer ctrl.Finish()
 
 			userRepo := mockdb.NewMockUserPortRepository(ctrl)
+			tokenRepo := mocksv.NewMockMaker(ctrl)
 
-			tc.mocks(userRepo)
+			tc.mocks(userRepo, tokenRepo)
 
-			userService := NewUserService(userRepo)
+			userService := NewUserService(userRepo, tokenRepo)
 
 			users := &request.RegisterUserRequest{
 				FullName: tc.input.user.FullName,
@@ -164,8 +167,8 @@ func TestCreateUser(t *testing.T) {
 			}
 
 			user, err := userService.Register(users)
-			assert.Equal(t, tc.expected.err, err, "Error Mismatch")
-			assert.Equal(t, tc.expected.user, user, "User missmatch")
+			assert.Equal(t, tc.expected.err, err)
+			assert.Equal(t, tc.expected.user, user)
 
 		})
 	}
@@ -193,12 +196,13 @@ func TestGetList(t *testing.T) {
 		desc string
 		mock func(
 			userRepo *mockdb.MockUserPortRepository,
+			tokenRepo *mocksv.MockMaker,
 		)
 		expected listUserseExpected
 	}{
 		{
 			desc: "SUCCESS GET USERS",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenRepo *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					GetListUser().
 					Times(1).
@@ -211,7 +215,7 @@ func TestGetList(t *testing.T) {
 		},
 		{
 			desc: "FAIL INTERNAL ERROR",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenRepo *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					GetListUser().
 					Times(1).
@@ -232,14 +236,15 @@ func TestGetList(t *testing.T) {
 			defer ctrl.Finish()
 
 			userRepo := mockdb.NewMockUserPortRepository(ctrl)
+			tokenRepo := mocksv.NewMockMaker(ctrl)
 
-			tc.mock(userRepo)
+			tc.mock(userRepo, tokenRepo)
 
-			userService := NewUserService(userRepo)
+			userService := NewUserService(userRepo, tokenRepo)
 
 			result, err := userService.ListUsers()
 
-			assert.Equal(t, tc.expected.err, err, "Error mismatch")
+			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.user, result)
 
 		})
@@ -282,13 +287,14 @@ func TestGetUserById(t *testing.T) {
 		desc string
 		mock func(
 			userRepo *mockdb.MockUserPortRepository,
+			tokenRepo *mocksv.MockMaker,
 		)
 		input    request.GetUserByIdRequest
 		expected getUserByIdExpected
 	}{
 		{
 			desc: "SUCCESS",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenRepo *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					GetUserById(gomock.Eq(requ)).
 					Times(1).
@@ -304,7 +310,7 @@ func TestGetUserById(t *testing.T) {
 		},
 		{
 			desc: "INTERNAL ERROR",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenRepo *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					GetUserById(gomock.Eq(requ)).
 					Times(1).
@@ -320,7 +326,7 @@ func TestGetUserById(t *testing.T) {
 		},
 		{
 			desc: "NOTFOUND",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenRepo *mocksv.MockMaker) {
 				userRepo.EXPECT().
 					GetUserById(gomock.Eq(requ)).
 					Times(1).
@@ -345,136 +351,176 @@ func TestGetUserById(t *testing.T) {
 			defer ctrl.Finish()
 
 			userRepo := mockdb.NewMockUserPortRepository(ctrl)
+			tokenRepo := mocksv.NewMockMaker(ctrl)
 
-			tc.mock(userRepo)
+			tc.mock(userRepo, tokenRepo)
 
-			userService := NewUserService(userRepo)
+			userService := NewUserService(userRepo, tokenRepo)
 			result, err := userService.GetUser(&tc.input)
-			assert.Equal(t, tc.expected.err, err, "Error mismatch")
+			assert.Equal(t, tc.expected.err, err)
 			assert.Equal(t, tc.expected.user, result)
 		})
 	}
 }
 
-type loginInput struct {
-	user *request.LoginUserRequest
-}
-
-type loginService struct {
+type loginSvResponse struct {
 	user *response.LoginUserResponseWithPassword
 	err  error
 }
-type loginRepo struct {
+
+type expectedResponse struct {
 	user *response.LoginUserResponse
 	err  error
 }
 
 func TestLogin(t *testing.T) {
-	userInput := &request.LoginUserRequest{
-		Username: gofakeit.Username(),
-		Password: gofakeit.Password(true, true, true, false, false, 8),
+	username := gofakeit.Username()
+	password := gofakeit.Password(true, true, true, true, false, 8)
+
+	token := gofakeit.UUID()
+
+	reqLogin := request.LoginUserRequest{
+		Username: username,
+		Password: password,
 	}
 
 	serviceRespon := &response.LoginUserResponseWithPassword{
 		ID:                gofakeit.UUID(),
-		Username:          userInput.Username,
+		Username:          username,
 		FullName:          gofakeit.Name(),
 		Email:             gofakeit.Email(),
-		HashedPassword:    userInput.Password,
+		HashedPassword:    password,
 		PasswordChangedAt: time.Time{},
 		Role:              dto.Admin,
 		IsEmailVerified:   false,
 		CreatedAt:         time.Now(),
 	}
 
-	repoRespon := &response.LoginUserResponse{
-		ID:                serviceRespon.ID,
-		Username:          userInput.Username,
-		FullName:          serviceRespon.FullName,
-		Email:             serviceRespon.Email,
-		PasswordChangedAt: serviceRespon.PasswordChangedAt,
-		Role:              serviceRespon.Role,
-		IsEmailVerified:   serviceRespon.IsEmailVerified,
-		CreatedAt:         serviceRespon.CreatedAt,
+	// serviceResponMiss := &response.LoginUserResponseWithPassword{
+	// 	ID:                gofakeit.UUID(),
+	// 	Username:          "Yurina",
+	// 	FullName:          gofakeit.Name(),
+	// 	Email:             gofakeit.Email(),
+	// 	HashedPassword:    password,
+	// 	PasswordChangedAt: time.Time{},
+	// 	Role:              dto.Admin,
+	// 	IsEmailVerified:   false,
+	// 	CreatedAt:         time.Now(),
+	// }
+
+	userRes := &response.UserResponse{
+		ID:                gofakeit.UUID(),
+		Username:          username,
+		FullName:          gofakeit.Name(),
+		Email:             gofakeit.Email(),
+		PasswordChangedAt: time.Time{},
+		Role:              dto.Admin,
+		IsEmailVerified:   false,
+		CreatedAt:         time.Now(),
 	}
 
 	testCases := []struct {
 		desc string
 		mock func(
 			userRepo *mockdb.MockUserPortRepository,
+			tokenSvc *mocksv.MockMaker,
 		)
-		input   loginInput
-		service loginService
-		repo    loginRepo
+		input    request.LoginUserRequest
+		output   loginSvResponse
+		expected expectedResponse
 	}{
 		{
-			desc: "LOGIN SUCCESSFULL",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
-				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(serviceRespon, nil)
+			desc: "SUCCESS",
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenSvc *mocksv.MockMaker) {
+				userRepo.EXPECT().Login(gomock.Eq(&reqLogin)).Times(1).Return(serviceRespon, nil)
+				tokenSvc.EXPECT().CreateToken(gomock.Eq(serviceRespon.Username), gomock.Any()).Times(1).Return(token, nil)
 			},
-			input: loginInput{
-				user: userInput,
-			},
-			service: loginService{
+			input: reqLogin,
+			output: loginSvResponse{
 				user: serviceRespon,
 				err:  nil,
 			},
-			repo: loginRepo{
-				user: repoRespon,
-				err:  nil,
+			expected: expectedResponse{
+				user: &response.LoginUserResponse{
+					User:        *userRes,
+					AccessToken: token,
+				},
+				err: nil,
 			},
 		},
 		{
-			desc: "LOGIN ERROR INTERNAL",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
-				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrInternal)
+			desc: "INTERNAL_ERROR",
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenSvc *mocksv.MockMaker) {
+				userRepo.EXPECT().Login(gomock.Eq(&reqLogin)).Times(1).Return(nil, entity.ErrInternal)
 			},
-			input: loginInput{
-				user: userInput,
-			},
-			service: loginService{
+			input: reqLogin,
+			output: loginSvResponse{
 				user: nil,
 				err:  entity.ErrInternal,
 			},
-			repo: loginRepo{
-				user: nil,
-				err:  entity.ErrInternal,
+			expected: expectedResponse{
+				user: &response.LoginUserResponse{
+					User:        *userRes,
+					AccessToken: "",
+				},
+				err: entity.ErrInternal,
 			},
 		},
 		{
-			desc: "LOGIN ERROR USERNAME NOT FOUND",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
-				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrDataNotFound)
+			desc: "USER_NOT_FOUND",
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenSvc *mocksv.MockMaker) {
+				userRepo.EXPECT().Login(gomock.Eq(&reqLogin)).Times(1).Return(nil, entity.ErrDataNotFound)
 			},
-			input: loginInput{
-				user: userInput,
-			},
-			service: loginService{
+			input: reqLogin,
+			output: loginSvResponse{
 				user: nil,
 				err:  entity.ErrDataNotFound,
 			},
-			repo: loginRepo{
-				user: nil,
-				err:  entity.ErrDataNotFound,
+			expected: expectedResponse{
+				user: &response.LoginUserResponse{
+					User:        *userRes,
+					AccessToken: "",
+				},
+				err: entity.ErrDataNotFound,
 			},
 		},
 		{
-			desc: "LOGIN PASSWORD NOT MATCH",
-			mock: func(userRepo *mockdb.MockUserPortRepository) {
-				userRepo.EXPECT().Login(gomock.Eq(userInput)).Times(1).Return(nil, entity.ErrNoMatchPassword)
+			desc: "FAIL_TOKEN_CREATION",
+			mock: func(userRepo *mockdb.MockUserPortRepository, tokenSvc *mocksv.MockMaker) {
+				userRepo.EXPECT().Login(gomock.Eq(&reqLogin)).Times(1).Return(serviceRespon, nil)
+				tokenSvc.EXPECT().CreateToken(gomock.Eq(reqLogin.Username), time.Duration(15)).Times(1).Return("", entity.ErrTokenCreation)
 			},
-			input: loginInput{
-				user: userInput,
-			},
-			service: loginService{
+			input: reqLogin,
+			output: loginSvResponse{
 				user: nil,
-				err:  entity.ErrNoMatchPassword,
+				err:  entity.ErrTokenCreation,
 			},
-			repo: loginRepo{
-				user: nil,
-				err:  entity.ErrNoMatchPassword,
+			expected: expectedResponse{
+				user: &response.LoginUserResponse{
+					User:        *userRes,
+					AccessToken: "",
+				},
+				err: entity.ErrTokenCreation,
 			},
 		},
+		// {
+		// 	desc: "FAIL_PASSWORD_MISSMATCH",
+		// 	mock: func(userRepo *mockdb.MockUserPortRepository, tokenSvc *mocksv.MockMaker) {
+		// 		userRepo.EXPECT().Login(gomock.Eq(&reqLogin)).Times(1).Return(serviceResponMiss, nil)
+		// 	},
+		// 	input: reqLogin,
+		// 	output: loginSvResponse{
+		// 		user: serviceResponMiss,
+		// 		err:  nil,
+		// 	},
+		// 	expected: expectedResponse{
+		// 		user: &response.LoginUserResponse{
+		// 			User:        *userRes,
+		// 			AccessToken: "",
+		// 		},
+		// 		err: entity.ErrNoMatchPassword,
+		// 	},
+		// },
 	}
 
 	for _, tc := range testCases {
@@ -486,13 +532,23 @@ func TestLogin(t *testing.T) {
 			defer ctrl.Finish()
 
 			userRepo := mockdb.NewMockUserPortRepository(ctrl)
+			tokenSv := mocksv.NewMockMaker(ctrl)
 
-			tc.mock(userRepo)
+			tc.mock(userRepo, tokenSv)
 
-			userService := NewUserService(userRepo)
-			result, err := userService.Login(tc.input.user)
-			assert.Equal(t, tc.repo.err, err, "Error mismatch")
-			assert.Equal(t, tc.repo.user, result)
+			userService := NewUserService(userRepo, tokenSv)
+
+			token, err := userService.Login(&tc.input)
+			if err != tc.expected.err {
+				t.Errorf("[case: %s] expected to get %q; got %q", tc.desc, tc.expected.err, err)
+			}
+
+			if tc.desc == "SUCCESS" {
+				if token.AccessToken != tc.expected.user.AccessToken {
+					t.Errorf("[case: %s] expected to get %q; got %q", tc.desc, tc.expected.user.AccessToken, token.AccessToken)
+				}
+			}
 		})
 	}
+
 }

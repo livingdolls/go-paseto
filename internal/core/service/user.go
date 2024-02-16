@@ -3,6 +3,8 @@ package service
 import (
 	"time"
 
+	"github.com/livingdolls/go-paseto/internal/core/common/helper"
+	"github.com/livingdolls/go-paseto/internal/core/common/token"
 	"github.com/livingdolls/go-paseto/internal/core/dto"
 	"github.com/livingdolls/go-paseto/internal/core/entity"
 	"github.com/livingdolls/go-paseto/internal/core/model/request"
@@ -14,12 +16,14 @@ import (
 )
 
 type userService struct {
-	repo repository.UserPortRepository
+	repo  repository.UserPortRepository
+	token token.Maker
 }
 
-func NewUserService(repo repository.UserPortRepository) service.UserPortService {
+func NewUserService(repo repository.UserPortRepository, token token.Maker) service.UserPortService {
 	return &userService{
-		repo: repo,
+		repo:  repo,
+		token: token,
 	}
 }
 
@@ -38,13 +42,19 @@ func (u *userService) ListUsers() (*[]response.RegisterUserResponse, error) {
 func (u *userService) Register(user *request.RegisterUserRequest) (*response.RegisterUserResponse, error) {
 	id := uuid.New()
 
+	hashPassword, errHash := helper.HashPassword(user.Password)
+
+	if errHash != nil {
+		return nil, errHash
+	}
+
 	userDTO := &dto.UserDTO{
 		ID:                id,
 		Username:          user.Username,
 		FullName:          user.FullName,
 		Email:             user.Email,
 		IsEmailVerified:   false,
-		HashedPassword:    user.Password, //TODO :: Hash Password
+		HashedPassword:    hashPassword,
 		Role:              dto.Admin,
 		PasswordChangedAt: time.Now(),
 		CreatedAt:         time.Now(),
@@ -92,7 +102,7 @@ func (u *userService) GetUser(id *request.GetUserByIdRequest) (*response.GetUser
 // Login implements service.UserPortService.
 func (u *userService) Login(user *request.LoginUserRequest) (*response.LoginUserResponse, error) {
 	res, err := u.repo.Login(user)
-	var result response.LoginUserResponse
+	var result *response.LoginUserResponse
 
 	if err != nil {
 		if err == entity.ErrDataNotFound {
@@ -104,19 +114,27 @@ func (u *userService) Login(user *request.LoginUserRequest) (*response.LoginUser
 		return nil, entity.ErrInternal
 	}
 
-	// TODO :: Make Paseto Token
+	accessToken, err := u.token.CreateToken(res.Username, time.Duration(15))
 
-	result = response.LoginUserResponse{
-		ID:                res.ID,
-		Username:          res.Username,
-		FullName:          res.FullName,
-		Email:             res.Email,
-		IsEmailVerified:   res.IsEmailVerified,
-		Role:              res.Role,
-		PasswordChangedAt: result.PasswordChangedAt,
-		CreatedAt:         res.CreatedAt,
+	if err != nil {
+		return nil, entity.ErrTokenCreation
 	}
 
-	return &result, nil
+	userRes := response.UserResponse{
+		ID:              res.ID,
+		Username:        res.Username,
+		FullName:        res.FullName,
+		Email:           res.Email,
+		IsEmailVerified: res.IsEmailVerified,
+		Role:            res.Role,
+		CreatedAt:       res.CreatedAt,
+	}
+
+	result = &response.LoginUserResponse{
+		User:        userRes,
+		AccessToken: accessToken,
+	}
+
+	return result, nil
 
 }

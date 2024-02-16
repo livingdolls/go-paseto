@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/livingdolls/go-paseto/internal/core/entity"
@@ -21,7 +22,9 @@ type Maker interface {
 func (p *PasetoMaker) CreateToken(username string, duration time.Duration) (string, error) {
 	payload, err := NewPayload(username, duration)
 
+	fmt.Println(payload)
 	if err != nil {
+		fmt.Println(err)
 		return "", nil
 	}
 
