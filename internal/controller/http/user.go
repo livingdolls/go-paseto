@@ -21,8 +21,8 @@ func NewUserController(gin *gin.Engine, userService service.UserPortService) Use
 	}
 }
 
-func (u UserController) InitRouter() {
-	api := u.gin.Group("api/v1")
+func (u UserController) InitRouter(v string) {
+	api := u.gin.Group(v)
 
 	router.Post(api, "/register", u.register)
 	router.Get(api, "/users", u.getUsers)
